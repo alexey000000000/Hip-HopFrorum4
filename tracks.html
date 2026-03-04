@@ -262,10 +262,14 @@ footer{border-top:1px solid var(--border);background:var(--surface);margin-top:4
       </div>
       <div id="uploadForm">
         <div class="upload-hint">
-          <strong>📎 Как получить прямую ссылку на MP3?</strong>
-          <b>Google Drive:</b> Файл → Поделиться → «Все у кого есть ссылка» → скопируй ID файла из ссылки и вставь сюда: <code>https://drive.google.com/uc?export=download&id=ВАШ_ID</code><br>
-          <b>Dropbox:</b> поменяй <code>dl=0</code> на <code>dl=1</code> в конце ссылки.<br>
-          <b>Прямой хостинг:</b> любая ссылка заканчивающаяся на <code>.mp3</code>
+          <strong>📎 Как добавить трек?</strong>
+          <b>Google Drive (рекомендуется):</b><br>
+          1. Загрузи MP3 на Google Drive<br>
+          2. ПКМ → «Открыть доступ» → «Все у кого есть ссылка»<br>
+          3. Скопируй ID из ссылки вида <code>drive.google.com/file/d/<b>ЭТОТ_ID</b>/view</code><br>
+          4. Вставь в поле: <code>https://drive.google.com/uc?export=download&id=ТВОЙ_ID</code><br><br>
+          <b>Dropbox:</b> замени <code>dl=0</code> → <code>dl=1</code> в конце ссылки.<br>
+          <b>Любой хостинг:</b> прямая ссылка заканчивающаяся на <code>.mp3</code>
         </div>
         <div class="form-group">
           <label class="form-label">Прямая ссылка на MP3</label>
@@ -477,11 +481,22 @@ function checkUploadState(){
 // ── RENDER ──
 function renderAll(){renderNew();renderTop();renderGenres();}
 
+function canDelete(t){
+  return currentUser&&(currentUser.name===t.uploader||currentUser.name===FLOW.ADMIN_NAME);
+}
+function deleteTrack(id){
+  if(!confirm('Удалить трек?'))return;
+  if(_currentCardId===id)stopAudio();
+  FLOW.saveTracks(FLOW.loadTracks().filter(t=>t.uploadedAt!==id));
+  renderAll();
+}
 function trackCardHTML(t,idx,globalIdx){
   const ci=globalIdx%6;
   const likes=t.likes||0;
   const liked=isLiked(t.uploadedAt);
-  return `<div class="track-card" id="card-${t.uploadedAt}">
+  const tid=t.uploadedAt;
+  const delBtn=canDelete(t)?`<button onclick="deleteTrack('${tid}')" title="Удалить" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:5px;color:var(--text3);transition:all .15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">🗑</button>`:'';
+  return `<div class="track-card" id="card-${tid}">
     <div class="track-card-main">
       <div class="track-thumb ${THUMBS[ci]}">${ICONS[ci]}</div>
       <div class="track-card-info">
@@ -489,27 +504,28 @@ function trackCardHTML(t,idx,globalIdx){
         <div class="track-card-artist">${esc(t.artist)}</div>
         <div class="track-card-meta">
           <span class="track-card-tag">${esc(t.genre)}</span>
-          <span class="track-card-date">${fmtDate(t.uploadedAt)}</span>
+          <span class="track-card-date">${fmtDate(tid)}</span>
           ${likes?`<span class="like-pill">❤️ ${likes}</span>`:''}
         </div>
       </div>
-      <button class="play-btn" id="playbtn-${t.uploadedAt}" onclick="togglePlay('${t.uploadedAt}','${esc(t.url)}')">▶</button>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">${delBtn}<button class="play-btn" id="playbtn-${tid}" onclick="togglePlay('${tid}','${esc(t.url)}')">▶</button></div>
     </div>
-    <div class="inline-player" id="player-${t.uploadedAt}">
+    <div class="inline-player" id="player-${tid}">
       <div class="audio-bar">
-        <span class="audio-time" id="cur-${t.uploadedAt}">0:00</span>
-        <div class="progress-wrap" id="prog-${t.uploadedAt}" onclick="seekTo(event,'${t.uploadedAt}')">
-          <div class="progress-fill" id="fill-${t.uploadedAt}"></div>
+        <span class="audio-time" id="cur-${tid}">0:00</span>
+        <div class="progress-wrap" id="prog-${tid}" onclick="seekTo(event,'${tid}')">
+          <div class="progress-fill" id="fill-${tid}"></div>
         </div>
-        <span class="audio-time" id="dur-${t.uploadedAt}">0:00</span>
+        <span class="audio-time" id="dur-${tid}">0:00</span>
         <div class="vol-wrap">
-          <span class="vol-icon" onclick="toggleMute('${t.uploadedAt}')">🔊</span>
-          <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="1" oninput="setVol(this,'${t.uploadedAt}')">
+          <span class="vol-icon" onclick="toggleMute('${tid}')">🔊</span>
+          <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="1" oninput="setVol(this,'${tid}')">
         </div>
       </div>
-      <button class="like-btn ${liked?'liked':''}" id="likebtn-${t.uploadedAt}" onclick="toggleLike('${t.uploadedAt}')">
-        ❤️ ${liked?'Нравится':'Нравится'} <span id="likenum-${t.uploadedAt}">${likes}</span>
-      </button>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+        <button class="like-btn ${liked?'liked':''}" id="likebtn-${tid}" onclick="toggleLike('${tid}')">❤️ Нравится <span id="likenum-${tid}">${likes}</span></button>
+        <a href="${esc(t.url)}" target="_blank" style="font-size:11px;color:var(--text3);text-decoration:none;">↗ Открыть файл</a>
+      </div>
     </div>
   </div>`;
 }
@@ -607,7 +623,17 @@ function openInlinePlayer(id,url){
   });
   audio.addEventListener('error',()=>{
     const panel=document.getElementById('player-'+id);
-    if(panel)panel.innerHTML='<p style="color:var(--accent);font-size:12px;padding:12px 0;">⚠️ Не удалось загрузить трек. Проверь ссылку.</p>';
+    if(panel){
+      panel.classList.add('open');
+      panel.innerHTML=`<div style="padding:14px 0;font-size:12px;color:var(--text2);line-height:1.7;">
+        <p style="color:var(--accent);font-weight:600;margin-bottom:6px;">⚠️ Не удалось воспроизвести трек</p>
+        <p>Возможные причины:<br>
+        • <b>Google Drive</b>: замени <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">drive.google.com/file/d/ID/view</code> на <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">drive.google.com/uc?export=download&id=ID</code><br>
+        • <b>Dropbox</b>: в конце ссылки замени <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">dl=0</code> на <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">dl=1</code><br>
+        • Сайт запрещает воспроизведение на других ресурсах (CORS)</p>
+        <a href="${url}" target="_blank" style="color:var(--accent);font-weight:600;">↗ Открыть напрямую</a>
+      </div>`;
+    }
   });
   audio.play().catch(()=>{});
 }
