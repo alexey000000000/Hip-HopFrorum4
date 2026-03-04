@@ -335,6 +335,21 @@ footer{border-top:1px solid var(--border);background:var(--surface);margin-top:4
   </div>
 </div>
 
+<!-- NICKNAME PICKER -->
+<div class="modal-overlay" id="nicknameModal">
+  <div class="modal">
+    <div class="modal-logo"><span class="logo-dot"></span>FLOW</div>
+    <h2>Придумай никнейм</h2>
+    <p class="modal-sub" style="margin-bottom:24px;">Ты входишь через Google. Выбери никнейм для форума — его увидят другие участники.</p>
+    <div class="form-group">
+      <label class="form-label">Никнейм</label>
+      <input class="form-input" id="nicknameInput" type="text" placeholder="MC_Кличка" oninput="clearNicknameErr()">
+      <div class="form-error" id="nicknameErr"></div>
+    </div>
+    <button class="btn-submit" onclick="submitNickname()">Готово</button>
+  </div>
+</div>
+
 <script src="data/store.js"></script>
 <script>
 const THUMBS = ['tc1','tc2','tc3','tc4','tc5','tc6'];
@@ -360,8 +375,10 @@ window.onload = function(){
 function onGoogleCredential(response){
   const r=FLOW.handleGoogleCredential(response);
   if(!r.ok){if(r.banned){showBanScreen();return;}const e=document.getElementById('loginGeneralErr');e.textContent=r.error;e.classList.add('show');return;}
+  ['loginModal','registerModal'].forEach(id=>{document.getElementById(id).classList.remove('open');});
+  document.body.style.overflow='';
+  if(r.pending){openNicknamePicker(r.googleData);return;}
   applyNavLogin(r.user);
-  ['loginModal','registerModal'].forEach(id=>{if(document.getElementById(id).classList.contains('open'))closeModal(id);});
 }
 function triggerGoogle(){
   if(!FLOW.isGoogleConfigured()){alert('Google OAuth не настроен.\n\nЧтобы включить:\n1. console.cloud.google.com\n2. APIs & Services → Credentials → Create OAuth 2.0 Client ID\n3. Вставь Client ID в data/store.js → GOOGLE_CLIENT_ID');return;}
@@ -509,6 +526,29 @@ function submitRegister(){
 }
 
 function showBanScreen(){document.getElementById('banScreen').style.display='flex';document.body.style.overflow='hidden';}
+
+let _pendingGoogleData=null;
+function openNicknamePicker(googleData){
+  _pendingGoogleData=googleData;
+  const suggestion=(googleData.gName||googleData.email.split('@')[0]).replace(/\s+/g,'').slice(0,20);
+  document.getElementById('nicknameInput').value=suggestion;
+  document.getElementById('nicknameErr').classList.remove('show');
+  document.getElementById('nicknameInput').classList.remove('error');
+  document.getElementById('nicknameModal').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('nicknameInput').focus(),300);
+}
+function clearNicknameErr(){document.getElementById('nicknameErr').classList.remove('show');document.getElementById('nicknameInput').classList.remove('error');}
+function submitNickname(){
+  const nickname=document.getElementById('nicknameInput').value.trim();
+  if(nickname.length<3){document.getElementById('nicknameErr').textContent='Минимум 3 символа';document.getElementById('nicknameErr').classList.add('show');document.getElementById('nicknameInput').classList.add('error');return;}
+  const r=FLOW.completeGoogleRegister(nickname,_pendingGoogleData);
+  if(!r.ok){document.getElementById('nicknameErr').textContent=r.error;document.getElementById('nicknameErr').classList.add('show');document.getElementById('nicknameInput').classList.add('error');return;}
+  _pendingGoogleData=null;
+  document.getElementById('nicknameModal').classList.remove('open');
+  document.body.style.overflow='';
+  applyNavLogin(r.user);
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtDate(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;['loginModal','registerModal'].forEach(id=>{if(document.getElementById(id).classList.contains('open'))closeModal(id);});});

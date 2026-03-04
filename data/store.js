@@ -11,7 +11,7 @@
 
 const FLOW = (function () {
 
-  const GOOGLE_CLIENT_ID = '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';
+  const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
 
   const KEYS = {
     USERS:   'flow_users',
@@ -106,20 +106,29 @@ const FLOW = (function () {
     let user = users.find(u => u.googleId === googleId) ||
                users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
     if (user && user.banned) return { ok: false, error: 'Аккаунт заблокирован', banned: true };
-    if (!user) {
-      // Auto-register
-      let base = (gName || email.split('@')[0]).replace(/\s+/g, '_');
-      let finalName = base, n = 1;
-      while (users.find(u => u.name.toLowerCase() === finalName.toLowerCase())) finalName = base + n++;
-      user = { name: finalName, email, googleId, picture, role: 'user',
-        authMethod: 'google', registeredAt: new Date().toISOString(), lastVisit: new Date().toISOString() };
-      users.push(user);
-    } else {
-      // Merge Google fields
+    if (user) {
+      // Existing user — just log in, merge Google fields
       const idx = users.indexOf(user);
       users[idx] = { ...user, googleId, picture, authMethod: 'google' };
       user = users[idx];
+      saveUsers(users);
+      startSession(user);
+      return { ok: true, user };
     }
+    // New user — return pending state so UI can ask for nickname
+    return { ok: true, pending: true, googleData: { googleId, email, picture, gName } };
+  }
+
+  function completeGoogleRegister(nickname, googleData) {
+    const { googleId, email, picture, gName } = googleData;
+    const users = loadUsers();
+    if (nickname.toLowerCase() === ADMIN.name.toLowerCase())
+      return { ok: false, error: 'Этот никнейм зарезервирован' };
+    if (users.find(u => u.name.toLowerCase() === nickname.toLowerCase()))
+      return { ok: false, error: 'Никнейм уже занят' };
+    const user = { name: nickname, email, googleId, picture, role: 'user',
+      authMethod: 'google', registeredAt: new Date().toISOString(), lastVisit: new Date().toISOString() };
+    users.push(user);
     saveUsers(users);
     startSession(user);
     return { ok: true, user };
@@ -146,7 +155,7 @@ const FLOW = (function () {
     getSession, setSession, clearSession,
     seedAdmin, restoreSession, startSession, endSession,
     loginLocal, registerLocal,
-    handleGoogleCredential,
+    handleGoogleCredential, completeGoogleRegister,
     banUser, deleteUser,
   };
 })();
