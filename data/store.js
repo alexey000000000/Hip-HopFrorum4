@@ -11,7 +11,7 @@
 
 const FLOW = (function () {
 
-  const GOOGLE_CLIENT_ID = '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';
+  const GOOGLE_CLIENT_ID = '850213009995-sk1eftedkqd20qehuvsjvthjsrokpvie.apps.googleusercontent.com';
 
   const KEYS = {
     USERS:   'flow_users',
