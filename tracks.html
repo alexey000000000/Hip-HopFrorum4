@@ -262,14 +262,10 @@ footer{border-top:1px solid var(--border);background:var(--surface);margin-top:4
       </div>
       <div id="uploadForm">
         <div class="upload-hint">
-          <strong>📎 Как добавить трек?</strong>
-          <b>Google Drive (рекомендуется):</b><br>
-          1. Загрузи MP3 на Google Drive<br>
-          2. ПКМ → «Открыть доступ» → «Все у кого есть ссылка»<br>
-          3. Скопируй ID из ссылки вида <code>drive.google.com/file/d/<b>ЭТОТ_ID</b>/view</code><br>
-          4. Вставь в поле: <code>https://drive.google.com/uc?export=download&id=ТВОЙ_ID</code><br><br>
-          <b>Dropbox:</b> замени <code>dl=0</code> → <code>dl=1</code> в конце ссылки.<br>
-          <b>Любой хостинг:</b> прямая ссылка заканчивающаяся на <code>.mp3</code>
+          <strong>📎 Как загрузить трек — 3 шага:</strong>
+          1. Зайди на <a href="https://catbox.moe" target="_blank" style="color:#0369a1;font-weight:600;">catbox.moe</a><br>
+          2. Нажми <b>Choose file</b> → выбери MP3 → нажми <b>Upload</b><br>
+          3. Скопируй ссылку вида <code>files.catbox.moe/xxxxx.mp3</code> и вставь ниже
         </div>
         <div class="form-group">
           <label class="form-label">Прямая ссылка на MP3</label>
@@ -628,9 +624,8 @@ function openInlinePlayer(id,url){
       panel.innerHTML=`<div style="padding:14px 0;font-size:12px;color:var(--text2);line-height:1.7;">
         <p style="color:var(--accent);font-weight:600;margin-bottom:6px;">⚠️ Не удалось воспроизвести трек</p>
         <p>Возможные причины:<br>
-        • <b>Google Drive</b>: замени <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">drive.google.com/file/d/ID/view</code> на <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">drive.google.com/uc?export=download&id=ID</code><br>
-        • <b>Dropbox</b>: в конце ссылки замени <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">dl=0</code> на <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">dl=1</code><br>
-        • Сайт запрещает воспроизведение на других ресурсах (CORS)</p>
+        • Ссылка не является прямой. Используй <b>catbox.moe</b> — загрузи файл и вставь ссылку вида <code style="background:#f0f0ee;padding:1px 4px;border-radius:3px;">files.catbox.moe/xxxxx.mp3</code><br>
+        • Сайт хостинга запрещает воспроизведение на других ресурсах (CORS)</p>
         <a href="${url}" target="_blank" style="color:var(--accent);font-weight:600;">↗ Открыть напрямую</a>
       </div>`;
     }
